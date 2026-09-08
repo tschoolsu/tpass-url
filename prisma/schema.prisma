@@ -6,3 +6,62 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Link {
+  id        String    @id            // slug，小寫 [a-z0-9-]{2,64}
+  target    String
+  title     String?
+  enabled   Boolean   @default(true)
+  expiresAt DateTime?
+  createdBy String                   // JWT sub
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  clicks    Click[]
+}
+
+model Click {
+  id        String   @id @default(uuid())   // 兼 beacon token
+  linkId    String
+  link      Link     @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  isBot     Boolean  @default(false)
+
+  // server 層
+  ip          String?
+  country     String?
+  city        String?
+  region      String?
+  regionCode  String?
+  postalCode  String?
+  latitude    String?
+  longitude   String?
+  timezone    String?
+  continent   String?
+  userAgent   String?
+  browser     String?
+  browserVer  String?
+  os          String?
+  osVer       String?
+  deviceType  String?
+  deviceModel String?
+  referer     String?
+  language    String?
+
+  // JS 層（beacon 一次性補入）
+  jsAt        DateTime?
+  screenW     Int?
+  screenH     Int?
+  viewportW   Int?
+  viewportH   Int?
+  dpr         Float?
+  colorDepth  Int?
+  jsTimezone  String?
+  jsLanguages String?
+  platform    String?
+  touch       Boolean?
+  cores       Int?
+  memoryGb    Float?
+  connection  String?
+
+  @@index([linkId, createdAt])
+}
