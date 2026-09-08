@@ -1,20 +1,20 @@
 // POST /api/click/<clickId>：跳轉頁的 sendBeacon 打進來補 JS 層欄位。無登入（點擊者是匿名的）。
 // clickId 是 uuid，不可猜；只准補一次，由 completeClick 的 jsAt IS NULL 保證。
-import { BEACON_MAX_BYTES, sanitizeBeacon } from "@/lib/beacon";
+import { BEACON_MAX_BYTES, readBounded, sanitizeBeacon } from "@/lib/beacon";
 import { completeClick } from "@/lib/links";
 
 export const runtime = "nodejs";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const NO_STORE = { "cache-control": "no-store" };
 
 export async function POST(req: Request, { params }: { params: Promise<{ clickId: string }> }) {
   const { clickId } = await params;
-  if (!UUID_RE.test(clickId)) return new Response(null, { status: 400 });
+  if (!UUID_RE.test(clickId)) return new Response(null, { status: 400, headers: NO_STORE });
 
-  const len = Number(req.headers.get("content-length") ?? 0);
-  if (len > BEACON_MAX_BYTES) return new Response(null, { status: 413 });
-  const text = await req.text();
-  if (text.length > BEACON_MAX_BYTES) return new Response(null, { status: 413 });
+  // 邊讀邊算長度，超過上限就中止串流，不把整個 body 吸進記憶體。
+  const text = await readBounded(req, BEACON_MAX_BYTES);
+  if (text === null) return new Response(null, { status: 413, headers: NO_STORE });
 
   let body: unknown = null;
   try {
@@ -24,5 +24,5 @@ export async function POST(req: Request, { params }: { params: Promise<{ clickId
   }
 
   await completeClick(clickId, sanitizeBeacon(body));
-  return new Response(null, { status: 204, headers: { "cache-control": "no-store" } });
+  return new Response(null, { status: 204, headers: NO_STORE });
 }

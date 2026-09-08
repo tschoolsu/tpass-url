@@ -38,6 +38,25 @@ function bool(v: unknown): boolean | null {
   return typeof v === "boolean" ? v : null;
 }
 
+// 讀 body 到上限為止；超過就回 null，不把整個 body 吸進記憶體。空 body 回 ""。
+export async function readBounded(req: Request, max: number): Promise<string | null> {
+  const reader = req.body?.getReader();
+  if (!reader) return "";
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > max) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  return new TextDecoder().decode(Buffer.concat(chunks));
+}
+
 export function sanitizeBeacon(body: unknown): JsClickFields {
   const o: Record<string, unknown> =
     body && typeof body === "object" && !Array.isArray(body) ? (body as Record<string, unknown>) : {};

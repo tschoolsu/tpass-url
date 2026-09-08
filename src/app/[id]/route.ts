@@ -23,11 +23,22 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   if (!link) return html(renderNotFoundPage(authConfig.portalUrl), 404);
 
   const bot = isBot(req.headers.get("user-agent"));
-  const click = await recordClick(link.id, clickFromHeaders(req.headers), bot);
+
+  // 記錄失敗不能擋跳轉：DB 掛了也要讓訪客過去，只是少一筆點擊記錄。
+  let clickId: string | null = null;
+  try {
+    clickId = (await recordClick(link.id, clickFromHeaders(req.headers), bot)).id;
+  } catch (e) {
+    console.error("[url] recordClick failed", e);
+  }
 
   if (bot) {
     return NextResponse.redirect(link.target, { status: 302, headers: { "cache-control": "no-store" } });
   }
   if (!isLive(link)) return html(renderGonePage(), 410);
-  return html(renderRedirectPage({ target: link.target, clickId: click.id }), 200);
+  // 沒有 Click 列可讓跳轉頁的 beacon 補資料，直接 302，不經過跳轉頁。
+  if (clickId === null) {
+    return NextResponse.redirect(link.target, { status: 302, headers: { "cache-control": "no-store" } });
+  }
+  return html(renderRedirectPage({ target: link.target, clickId }), 200);
 }

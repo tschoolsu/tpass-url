@@ -1,5 +1,19 @@
 import { describe, it, expect } from "vitest";
-import { sanitizeBeacon } from "./beacon";
+import { BEACON_MAX_BYTES, readBounded, sanitizeBeacon } from "./beacon";
+
+function streamRequest(chunks: Uint8Array[]): Request {
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const c of chunks) controller.enqueue(c);
+      controller.close();
+    },
+  });
+  return new Request("https://url.lvh.me/api/click/x", {
+    method: "POST",
+    body: stream,
+    duplex: "half",
+  } as RequestInit);
+}
 
 describe("sanitizeBeacon", () => {
   it("正常 body 全數保留", () => {
@@ -62,5 +76,30 @@ describe("sanitizeBeacon", () => {
       const r = sanitizeBeacon(bad);
       expect(Object.values(r).every((v) => v === null)).toBe(true);
     }
+  });
+});
+
+describe("readBounded", () => {
+  it("body 在上限內回傳原文字", async () => {
+    const enc = new TextEncoder();
+    const req = streamRequest([enc.encode('{"screenW":390}')]);
+    const text = await readBounded(req, BEACON_MAX_BYTES);
+    expect(text).toBe('{"screenW":390}');
+  });
+
+  it("body 超過上限回 null，不整包吸進記憶體", async () => {
+    const enc = new TextEncoder();
+    // 分成多個 chunk，總長超過上限；沒有 content-length。
+    const chunk = enc.encode("x".repeat(1024));
+    const chunks = [chunk, chunk, chunk, chunk, chunk]; // 5 * 1024 = 5120 > 4096
+    const req = streamRequest(chunks);
+    const text = await readBounded(req, BEACON_MAX_BYTES);
+    expect(text).toBeNull();
+  });
+
+  it("空 body 回空字串", async () => {
+    const req = streamRequest([]);
+    const text = await readBounded(req, BEACON_MAX_BYTES);
+    expect(text).toBe("");
   });
 });
