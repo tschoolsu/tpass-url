@@ -27,4 +27,10 @@ describe("isBot", () => {
     expect(isBot(null)).toBe(false);
     expect(isBot("")).toBe(false);
   });
+  it("bot 只在單詞邊界算數，不誤中一般字詞", () => {
+    expect(isBot("Mozilla/5.0 Botanical Browser")).toBe(false);
+  });
+  it("bot 在 UA 開頭且後面接非字母仍算 bot", () => {
+    expect(isBot("Mozilla/5.0 (compatible; Bingbot/2.0)")).toBe(true);
+  });
 });

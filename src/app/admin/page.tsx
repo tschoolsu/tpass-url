@@ -5,10 +5,12 @@ import { authConfig } from "@/config/auth";
 import { listLinks, isLive } from "@/lib/links";
 import { fmtTime } from "@/lib/format";
 import { CopyButton } from "@/components/admin/CopyButton";
+import { requireAdmin } from "@/lib/guard";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminHome() {
+  await requireAdmin();
   const links = await listLinks();
   const base = authConfig.selfUrl;
 

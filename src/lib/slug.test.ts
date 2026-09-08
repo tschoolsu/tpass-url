@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { normalizeSlug, validateSlug, generateSlug, validateTarget } from "./slug";
+import { normalizeSlug, validateSlug, generateSlug, validateTarget, RESERVED } from "./slug";
 
 describe("normalizeSlug", () => {
   it("trim 並轉小寫", () => {
@@ -29,9 +29,13 @@ describe("validateSlug", () => {
     expect(validateSlug("ab-")).not.toBeNull();
   });
   it("擋保留字", () => {
-    for (const r of ["admin", "api", "_next", "favicon.ico", "robots.txt", "sitemap.xml"]) {
-      expect(validateSlug(r)).toMatch(/保留/);
+    for (const r of RESERVED) {
+      expect(validateSlug(r), r).toMatch(/保留/);
     }
+  });
+  it("保留字集合含 manifest.json 與 new", () => {
+    expect(RESERVED.has("manifest.json")).toBe(true);
+    expect(RESERVED.has("new")).toBe(true);
   });
 });
 

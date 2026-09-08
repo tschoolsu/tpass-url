@@ -10,6 +10,7 @@ export const RESERVED: ReadonlySet<string> = new Set([
   "robots.txt",
   "sitemap.xml",
   "manifest.json",
+  "new",
 ]);
 
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;

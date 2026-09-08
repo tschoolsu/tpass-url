@@ -15,8 +15,9 @@ export function CopyButton({ text }: { text: string }) {
         navigator.clipboard.writeText(text).then(
           () => setStatus("done"),
           () => setStatus("error"),
-        );
-        setTimeout(() => setStatus("idle"), 1500);
+        ).finally(() => {
+          setTimeout(() => setStatus("idle"), 1500);
+        });
       }}
       className="inline-flex items-center gap-1 rounded-md border-2 border-foreground bg-card px-2 py-0.5 font-mono text-[11px] font-bold shadow-[2px_2px_0_0_var(--color-foreground)] transition-all hover:-translate-y-0.5"
     >

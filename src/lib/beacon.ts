@@ -49,12 +49,17 @@ export async function readBounded(req: Request, max: number): Promise<string | n
     if (done) break;
     size += value.byteLength;
     if (size > max) {
-      await reader.cancel();
+      await reader.cancel().catch(() => {});
       return null;
     }
     chunks.push(value);
   }
   return new TextDecoder().decode(Buffer.concat(chunks));
+}
+
+// 全部欄位都被清成 null（空包或垃圾 beacon）不算有效補資料，不該燒掉一次性額度。
+export function isEmptyBeacon(f: JsClickFields): boolean {
+  return Object.values(f).every((v) => v === null);
 }
 
 export function sanitizeBeacon(body: unknown): JsClickFields {

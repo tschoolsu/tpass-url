@@ -1,6 +1,6 @@
 // POST /api/click/<clickId>：跳轉頁的 sendBeacon 打進來補 JS 層欄位。無登入（點擊者是匿名的）。
 // clickId 是 uuid，不可猜；只准補一次，由 completeClick 的 jsAt IS NULL 保證。
-import { BEACON_MAX_BYTES, readBounded, sanitizeBeacon } from "@/lib/beacon";
+import { BEACON_MAX_BYTES, isEmptyBeacon, readBounded, sanitizeBeacon } from "@/lib/beacon";
 import { completeClick } from "@/lib/links";
 
 export const runtime = "nodejs";
@@ -23,6 +23,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ clickId
     body = null;
   }
 
-  await completeClick(clickId, sanitizeBeacon(body));
+  // 空／垃圾 beacon（每個欄位都被清成 null）不值得燒掉一次性額度。
+  const fields = sanitizeBeacon(body);
+  if (!isEmptyBeacon(fields)) await completeClick(clickId, fields);
   return new Response(null, { status: 204, headers: NO_STORE });
 }

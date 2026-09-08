@@ -26,6 +26,15 @@ describe("renderRedirectPage", () => {
     expect(html).toContain("location.replace(");
     expect(html).toContain("sendBeacon");
   });
+  it("clearTimeout(t);go() 在 try 區塊內，beacon 送出後才解除保底計時器", () => {
+    expect(html).toContain("clearTimeout(t);go()");
+    const tryIdx = html.indexOf("try{");
+    const catchIdx = html.indexOf("}catch(e){}");
+    const clearIdx = html.indexOf("clearTimeout(t);go()");
+    expect(tryIdx).toBeGreaterThan(-1);
+    expect(clearIdx).toBeGreaterThan(tryIdx);
+    expect(clearIdx).toBeLessThan(catchIdx);
+  });
   it("蒐集的欄位名與 beacon 清洗欄位一致", () => {
     for (const k of [
       "screenW", "screenH", "viewportW", "viewportH", "dpr", "colorDepth",

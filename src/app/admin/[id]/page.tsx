@@ -7,6 +7,7 @@ import { getLink, isLive, linkStats, listClicks } from "@/lib/links";
 import { fmtTime } from "@/lib/format";
 import { CopyButton } from "@/components/admin/CopyButton";
 import { DeleteLinkButton } from "@/components/admin/DeleteLinkButton";
+import { requireAdmin } from "@/lib/guard";
 
 export const dynamic = "force-dynamic";
 
@@ -30,12 +31,13 @@ export default async function LinkDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ page?: string; bots?: string }>;
 }) {
+  await requireAdmin();
   const { id } = await params;
   const sp = await searchParams;
   const link = await getLink(id);
   if (!link) notFound();
 
-  const page = Math.max(1, Number(sp.page) || 1);
+  const page = Math.max(1, Math.floor(Number(sp.page)) || 1);
   const includeBots = sp.bots === "1";
   const [stats, clicks] = await Promise.all([linkStats(id), listClicks(id, { page, includeBots })]);
   const pages = Math.max(1, Math.ceil(clicks.total / clicks.pageSize));

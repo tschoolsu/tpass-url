@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { BEACON_MAX_BYTES, readBounded, sanitizeBeacon } from "./beacon";
+import { BEACON_MAX_BYTES, isEmptyBeacon, readBounded, sanitizeBeacon } from "./beacon";
 
 function streamRequest(chunks: Uint8Array[]): Request {
   const stream = new ReadableStream<Uint8Array>({
@@ -76,6 +76,16 @@ describe("sanitizeBeacon", () => {
       const r = sanitizeBeacon(bad);
       expect(Object.values(r).every((v) => v === null)).toBe(true);
     }
+  });
+});
+
+describe("isEmptyBeacon", () => {
+  it("全部欄位為 null → true", () => {
+    expect(isEmptyBeacon(sanitizeBeacon(null))).toBe(true);
+    expect(isEmptyBeacon(sanitizeBeacon({}))).toBe(true);
+  });
+  it("任一欄位有值 → false", () => {
+    expect(isEmptyBeacon(sanitizeBeacon({ screenW: 390 }))).toBe(false);
   });
 });
 

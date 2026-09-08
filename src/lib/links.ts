@@ -5,14 +5,9 @@ import type { ServerClickFields } from "@/lib/click-headers";
 import type { JsClickFields } from "@/lib/beacon";
 
 export type { Link, Click };
+export { isLive } from "@/lib/decide";
 
 export const PAGE_SIZE = 50;
-
-export function isLive(link: { enabled: boolean; expiresAt: Date | null }, now = new Date()): boolean {
-  if (!link.enabled) return false;
-  if (link.expiresAt && link.expiresAt <= now) return false;
-  return true;
-}
 
 export function listLinks() {
   return prisma.link.findMany({

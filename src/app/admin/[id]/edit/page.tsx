@@ -3,8 +3,10 @@ import { authConfig } from "@/config/auth";
 import { getLink } from "@/lib/links";
 import { toLocalInput } from "@/lib/format";
 import { LinkForm } from "@/components/admin/LinkForm";
+import { requireAdmin } from "@/lib/guard";
 
 export default async function EditLinkPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAdmin();
   const { id } = await params;
   const link = await getLink(id);
   if (!link) notFound();
