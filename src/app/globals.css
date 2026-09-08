@@ -1,0 +1,14 @@
+@import "tailwindcss";
+@import "tpass-ui/theme.css";
+@source "../../node_modules/tpass-ui/dist";
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  font-weight: 500;
+}
