@@ -43,8 +43,12 @@ export function updateLink(
   return prisma.link.update({ where: { id }, data });
 }
 
+// 交易內先查存在再刪，避免對不存在的 id 觸發 delete 的 P2025。
 export async function deleteLink(id: string): Promise<void> {
-  await prisma.link.delete({ where: { id } });
+  await prisma.$transaction(async (tx) => {
+    const exists = await tx.link.findUnique({ where: { id }, select: { id: true } });
+    if (exists) await tx.link.delete({ where: { id } });
+  });
 }
 
 export function recordClick(linkId: string, fields: ServerClickFields, isBot: boolean) {
